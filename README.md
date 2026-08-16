@@ -1,4 +1,4 @@
-# app_01
+# task-manager
 
 A new Flutter project.
 

@@ -11,17 +11,17 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  final _controller = TextEditingController();
+  final _textEditingController = TextEditingController();
 
   @override
   void dispose() {
-    _controller.dispose();
+    _textEditingController.dispose();
     super.dispose();
   }
 
   void _submit() {
-    context.read<TaskProvider>().addTask(_controller.text);
-    _controller.clear();
+    context.read<TaskProvider>().addTask(_textEditingController.text);
+    _textEditingController.clear();
   }
 
   @override
@@ -33,7 +33,7 @@ class _TodoScreenState extends State<TodoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meine Aufgaben'),
+        title: const Text('My Tasks'),
         elevation: 0,
         centerTitle: true,
       ),
@@ -56,7 +56,7 @@ class _TodoScreenState extends State<TodoScreen> {
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _controller,
+                      controller: _textEditingController,
                       style: TextStyle(
                         color: colors.onSurface,
                       ),
@@ -111,7 +111,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Noch keine Aufgaben',
+                            'Noch keine Aufgaben.',
                             style: textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
