@@ -68,3 +68,6 @@ node_modules/
 # Widget Preview related
 .widget_preview/
 /.claude/
+CLAUDE.md
+AGENTS.md
+analysis_options.yaml
