@@ -47,11 +47,11 @@ class _TodoScreenState extends State<TodoScreen> {
           builder: (context, snapshot) {
             final dateTime = snapshot.data;
             final date = dateTime == null
-                ? 'Datum wird geladen ...'
+                ? 'Loading date...'
                 : '${dateTime.day.toString().padLeft(2, '0')}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.year}';
             final time = dateTime == null
                 ? ''
-                : '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} Uhr';
+                : '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
 
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -87,7 +87,7 @@ class _TodoScreenState extends State<TodoScreen> {
                       controller: _textEditingController,
                       style: TextStyle(color: colors.onSurface),
                       decoration: InputDecoration(
-                        hintText: 'Neue Aufgabe hinzufügen',
+                        hintText: 'Add new task',
                         hintStyle: TextStyle(
                           color: colors.onSurface.withAlpha(100),
                         ),
@@ -135,12 +135,12 @@ class _TodoScreenState extends State<TodoScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Noch keine Aufgaben.',
+                            'No tasks yet.',
                             style: textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Füge eine neue Aufgabe hinzu, um zu beginnen',
+                            'Add a new task to get started',
                             style: textTheme.bodyMedium?.copyWith(
                               color: Colors.grey,
                             ),
