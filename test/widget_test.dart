@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(const MyApp());
 
     // Initially no tasks.
-    expect(find.text('Noch keine Aufgaben.'), findsOneWidget);
+    expect(find.text('No tasks yet.'), findsOneWidget);
 
     // Add a task.
     await tester.enterText(find.byType(TextField), 'Milch kaufen');
@@ -16,7 +16,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Milch kaufen'), findsOneWidget);
-    expect(find.text('Noch keine Aufgaben.'), findsNothing);
+    expect(find.text('No tasks yet.'), findsNothing);
 
     // Mark as done.
     await tester.tap(find.byType(Checkbox));
@@ -30,6 +30,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Milch kaufen'), findsNothing);
-    expect(find.text('Noch keine Aufgaben.'), findsOneWidget);
+    expect(find.text('No tasks yet.'), findsOneWidget);
   });
 }
