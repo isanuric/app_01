@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => TaskProvider(),
       child: MaterialApp(
-        title: 'Meine Aufgaben',
+        title: 'test-manager',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
