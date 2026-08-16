@@ -6,6 +6,15 @@ import 'screens/todo_screen.dart';
 
 const _appBarTheme = AppBarTheme(elevation: 0, scrolledUnderElevation: 0);
 
+ThemeData _buildTheme(Brightness brightness) => ThemeData(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    brightness: brightness,
+  ),
+  useMaterial3: true,
+  appBarTheme: _appBarTheme,
+);
+
 void main() {
   runApp(const MyApp());
 }
@@ -19,22 +28,8 @@ class MyApp extends StatelessWidget {
       create: (_) => TaskProvider(),
       child: MaterialApp(
         title: 'task-manager',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: _appBarTheme,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-          appBarTheme: _appBarTheme,
-        ),
+        theme: _buildTheme(Brightness.light),
+        darkTheme: _buildTheme(Brightness.dark),
         themeMode: ThemeMode.system,
         home: const TodoScreen(),
       ),

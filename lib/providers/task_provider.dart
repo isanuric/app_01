@@ -23,8 +23,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void deleteTask(String id) {
-    if (_tasks.remove(id) != null) {
-      notifyListeners();
-    }
+    _tasks.remove(id);
+    notifyListeners();
   }
 }

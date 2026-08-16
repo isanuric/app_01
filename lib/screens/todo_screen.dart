@@ -6,6 +6,12 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../services/time_service.dart';
 
+String _formatDate(DateTime dt) =>
+    '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+
+String _formatTime(DateTime dt) =>
+    '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
 
@@ -18,6 +24,13 @@ class _TodoScreenState extends State<TodoScreen> {
   final _timeService = const TimeService();
   late Future<DateTime> _dateTimeFuture;
   Timer? _timer;
+  late Color _hintTextColor;
+  late Color _doneTaskBorderColor;
+  late Color _deleteIconColor;
+  late Color _emptyStateIconColor;
+  late Color _shadowColor;
+  final _borderRadius = BorderRadius.circular(12);
+  bool _colorsInitialized = false;
 
   @override
   void initState() {
@@ -29,6 +42,17 @@ class _TodoScreenState extends State<TodoScreen> {
         _dateTimeFuture = _timeService.fetchDateTime();
       });
     });
+  }
+
+  void _initializeColors() {
+    if (_colorsInitialized) return;
+    final colors = Theme.of(context).colorScheme;
+    _hintTextColor = colors.onSurface.withAlpha(100);
+    _doneTaskBorderColor = Colors.grey.withAlpha(100);
+    _deleteIconColor = Colors.red.withAlpha(150);
+    _emptyStateIconColor = colors.primary.withAlpha(100);
+    _shadowColor = colors.primary.withAlpha(100);
+    _colorsInitialized = true;
   }
 
   @override
@@ -45,10 +69,10 @@ class _TodoScreenState extends State<TodoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _initializeColors();
     final tasks = context.watch<TaskProvider>().tasks;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final borderRadius = BorderRadius.circular(12);
 
     return Scaffold(
       appBar: AppBar(
@@ -56,19 +80,15 @@ class _TodoScreenState extends State<TodoScreen> {
           future: _dateTimeFuture,
           builder: (context, snapshot) {
             final dateTime = snapshot.data;
-            final date = dateTime == null
-                ? 'Loading date...'
-                : '${dateTime.day.toString().padLeft(2, '0')}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.year}';
-            final time = dateTime == null
-                ? ''
-                : '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+            final dateStr = dateTime == null ? 'Loading date...' : _formatDate(dateTime);
+            final timeStr = dateTime == null ? '' : _formatTime(dateTime);
 
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('My Tasks'),
                 Text(
-                  '$date $time',
+                  '$dateStr $timeStr',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
               ],
@@ -99,9 +119,9 @@ class _TodoScreenState extends State<TodoScreen> {
                       decoration: InputDecoration(
                         hintText: 'Add new task',
                         hintStyle: TextStyle(
-                          color: colors.onSurface.withAlpha(100),
+                          color: _hintTextColor,
                         ),
-                        border: OutlineInputBorder(borderRadius: borderRadius),
+                        border: OutlineInputBorder(borderRadius: _borderRadius),
                         filled: true,
                         fillColor: colors.surface,
                         contentPadding: const EdgeInsets.symmetric(
@@ -118,7 +138,7 @@ class _TodoScreenState extends State<TodoScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: colors.primary.withAlpha(100),
+                          color: _shadowColor,
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -141,7 +161,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           Icon(
                             Icons.check_circle_outline,
                             size: 64,
-                            color: colors.primary.withAlpha(100),
+                            color: _emptyStateIconColor,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -171,14 +191,14 @@ class _TodoScreenState extends State<TodoScreen> {
                           child: Card(
                             elevation: 2,
                             shape: RoundedRectangleBorder(
-                              borderRadius: borderRadius,
+                              borderRadius: _borderRadius,
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: borderRadius,
+                                borderRadius: _borderRadius,
                                 border: task.isDone
                                     ? Border.all(
-                                        color: Colors.grey.withAlpha(100),
+                                        color: _doneTaskBorderColor,
                                       )
                                     : null,
                               ),
@@ -198,18 +218,17 @@ class _TodoScreenState extends State<TodoScreen> {
                                 ),
                                 title: Text(
                                   task.title,
-                                  style: task.isDone
-                                      ? textTheme.bodyLarge?.copyWith(
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                          color: Colors.grey,
-                                        )
-                                      : textTheme.bodyLarge,
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    decoration: task.isDone
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    color: task.isDone ? Colors.grey : null,
+                                  ),
                                 ),
                                 trailing: IconButton(
                                   icon: Icon(
                                     Icons.delete_outline,
-                                    color: Colors.red.withAlpha(150),
+                                    color: _deleteIconColor,
                                   ),
                                   onPressed: () => context
                                       .read<TaskProvider>()
@@ -228,3 +247,4 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 }
+
