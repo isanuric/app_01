@@ -15,7 +15,7 @@ class TimeService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Zeit konnte nicht geladen werden.');
+      throw Exception('Failed to load current time from the API.');
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
