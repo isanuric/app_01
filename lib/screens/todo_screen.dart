@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/task_provider.dart';
+import '../services/time_service.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -12,6 +13,14 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
+  final _timeService = const TimeService();
+  late final Future<DateTime> _dateTimeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateTimeFuture = _timeService.fetchDateTime();
+  }
 
   @override
   void dispose() {
@@ -33,7 +42,29 @@ class _TodoScreenState extends State<TodoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Tasks'),
+        title: FutureBuilder<DateTime>(
+          future: _dateTimeFuture,
+          builder: (context, snapshot) {
+            final dateTime = snapshot.data;
+            final date = dateTime == null
+                ? 'Datum wird geladen ...'
+                : '${dateTime.day.toString().padLeft(2, '0')}.${dateTime.month.toString().padLeft(2, '0')}.${dateTime.year}';
+            final time = dateTime == null
+                ? ''
+                : '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} Uhr';
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('My Tasks'),
+                Text(
+                  '$date $time',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ],
+            );
+          },
+        ),
         elevation: 0,
         centerTitle: true,
       ),
@@ -42,10 +73,7 @@ class _TodoScreenState extends State<TodoScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              colors.primary.withAlpha(10),
-              colors.primary.withAlpha(5),
-            ],
+            colors: [colors.primary.withAlpha(10), colors.primary.withAlpha(5)],
           ),
         ),
         child: Column(
@@ -57,17 +85,13 @@ class _TodoScreenState extends State<TodoScreen> {
                   Expanded(
                     child: TextField(
                       controller: _textEditingController,
-                      style: TextStyle(
-                        color: colors.onSurface,
-                      ),
+                      style: TextStyle(color: colors.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Neue Aufgabe hinzufügen',
                         hintStyle: TextStyle(
                           color: colors.onSurface.withAlpha(100),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: borderRadius,
-                        ),
+                        border: OutlineInputBorder(borderRadius: borderRadius),
                         filled: true,
                         fillColor: colors.surface,
                         contentPadding: const EdgeInsets.symmetric(
@@ -125,7 +149,10 @@ class _TodoScreenState extends State<TodoScreen> {
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {
                         final task = tasks[index];
@@ -163,9 +190,10 @@ class _TodoScreenState extends State<TodoScreen> {
                                   task.title,
                                   style: task.isDone
                                       ? textTheme.bodyLarge?.copyWith(
-                                            decoration: TextDecoration.lineThrough,
-                                            color: Colors.grey,
-                                          )
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                          color: Colors.grey,
+                                        )
                                       : textTheme.bodyLarge,
                                 ),
                                 trailing: IconButton(
