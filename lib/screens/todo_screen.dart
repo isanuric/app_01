@@ -29,7 +29,7 @@ class _TodoScreenState extends State<TodoScreen> {
     final tasks = context.watch<TaskProvider>().tasks;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    const borderRadius = BorderRadius.circular(12);
+    final borderRadius = BorderRadius.circular(12);
 
     return Scaffold(
       appBar: AppBar(
