@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,16 +16,24 @@ class TodoScreen extends StatefulWidget {
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
   final _timeService = const TimeService();
-  late final Future<DateTime> _dateTimeFuture;
+  late Future<DateTime> _dateTimeFuture;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _dateTimeFuture = _timeService.fetchDateTime();
+
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      setState(() {
+        _dateTimeFuture = _timeService.fetchDateTime();
+      });
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _textEditingController.dispose();
     super.dispose();
   }
