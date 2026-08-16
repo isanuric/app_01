@@ -28,6 +28,8 @@ class _TodoScreenState extends State<TodoScreen> {
   Widget build(BuildContext context) {
     final tasks = context.watch<TaskProvider>().tasks;
     final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    const borderRadius = BorderRadius.circular(12);
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +66,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           color: colors.onSurface.withAlpha(100),
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: borderRadius,
                         ),
                         filled: true,
                         fillColor: colors.surface,
@@ -110,12 +112,12 @@ class _TodoScreenState extends State<TodoScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'Noch keine Aufgaben',
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Füge eine neue Aufgabe hinzu, um zu beginnen',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: textTheme.bodyMedium?.copyWith(
                               color: Colors.grey,
                             ),
                           ),
@@ -132,11 +134,11 @@ class _TodoScreenState extends State<TodoScreen> {
                           child: Card(
                             elevation: 2,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: borderRadius,
                             ),
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: borderRadius,
                                 border: task.isDone
                                     ? Border.all(
                                         color: Colors.grey.withAlpha(100),
@@ -160,11 +162,11 @@ class _TodoScreenState extends State<TodoScreen> {
                                 title: Text(
                                   task.title,
                                   style: task.isDone
-                                      ? Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      ? textTheme.bodyLarge?.copyWith(
                                             decoration: TextDecoration.lineThrough,
                                             color: Colors.grey,
                                           )
-                                      : Theme.of(context).textTheme.bodyLarge,
+                                      : textTheme.bodyLarge,
                                 ),
                                 trailing: IconButton(
                                   icon: Icon(

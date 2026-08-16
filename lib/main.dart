@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'providers/task_provider.dart';
 import 'screens/todo_screen.dart';
 
+const _appBarTheme = AppBarTheme(elevation: 0, scrolledUnderElevation: 0);
+
 void main() {
   runApp(const MyApp());
 }
@@ -23,10 +25,7 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            elevation: 0,
-            scrolledUnderElevation: 0,
-          ),
+          appBarTheme: _appBarTheme,
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
@@ -34,10 +33,7 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            elevation: 0,
-            scrolledUnderElevation: 0,
-          ),
+          appBarTheme: _appBarTheme,
         ),
         themeMode: ThemeMode.system,
         home: const TodoScreen(),
