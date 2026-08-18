@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../services/time_service.dart';
 
@@ -11,6 +12,12 @@ String _formatDate(DateTime dt) =>
 
 String _formatTime(DateTime dt) =>
     '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+Color _priorityColor(TaskPriority priority) => switch (priority) {
+      TaskPriority.low => Colors.green,
+      TaskPriority.medium => Colors.orange,
+      TaskPriority.high => Colors.red,
+    };
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -278,30 +285,78 @@ class _TodoScreenState extends State<TodoScreen> {
                                         )
                                       : null,
                                 ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  leading: Checkbox(
-                                    value: task.isDone,
-                                    onChanged: (_) => context
-                                        .read<TaskProvider>()
-                                        .toggleDone(task.id),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                leading: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: _priorityColor(task.priority),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
                                     ),
-                                  ),
-                                  title: Text(
-                                    task.title,
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      decoration: task.isDone
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      color: task.isDone ? Colors.grey : null,
+                                    const SizedBox(width: 12),
+                                    Checkbox(
+                                      value: task.isDone,
+                                      onChanged: (_) => context
+                                          .read<TaskProvider>()
+                                          .toggleDone(task.id),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(4),
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                title: Text(
+                                  task.title,
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    decoration: task.isDone
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    color: task.isDone ? Colors.grey : null,
                                   ),
                                 ),
+                                trailing: PopupMenuButton<TaskPriority>(
+                                  enabled: !task.isDone,
+                                  onSelected: (priority) => context
+                                      .read<TaskProvider>()
+                                      .setPriority(task.id, priority),
+                                  itemBuilder: (context) => [
+                                    for (final priority in TaskPriority.values)
+                                      PopupMenuItem(
+                                        value: priority,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: _priorityColor(
+                                                  priority,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(priority.name),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                  icon: Icon(
+                                    Icons.flag_outlined,
+                                    color: _priorityColor(task.priority),
+                                  ),
+                                ),
+                              ),
                               ),
                             ),
                           ),
