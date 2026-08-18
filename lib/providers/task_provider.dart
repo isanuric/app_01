@@ -26,4 +26,11 @@ class TaskProvider extends ChangeNotifier {
     _tasks.remove(id);
     notifyListeners();
   }
+
+  void setAllDone(bool done) {
+    for (final task in _tasks.values) {
+      task.isDone = done;
+    }
+    notifyListeners();
+  }
 }

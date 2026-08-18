@@ -152,6 +152,28 @@ class _TodoScreenState extends State<TodoScreen> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const SizedBox(width: 24),
+                  SizedBox(
+                    width: 40,
+                    child: Checkbox(
+                      value: tasks.isNotEmpty && tasks.every((t) => t.isDone),
+                      onChanged: tasks.isEmpty
+                          ? null
+                          : (value) => context
+                              .read<TaskProvider>()
+                              .setAllDone(value ?? false),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('Select All'),
+                  const Spacer(),
+                ],
+              ),
+            ),
             Expanded(
               child: tasks.isEmpty
                   ? Center(
