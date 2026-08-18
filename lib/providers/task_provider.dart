@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/task.dart';
@@ -5,13 +7,21 @@ import '../models/task.dart';
 class TaskProvider extends ChangeNotifier {
   final List<Task> _tasks = [];
 
-  List<Task> get tasks => List.unmodifiable(_tasks);
+  List<Task> get tasks => UnmodifiableListView(_tasks);
+
+  bool get allDone => _tasks.isNotEmpty && _tasks.every((t) => t.isDone);
 
   Task? _taskById(String id) {
     for (final task in _tasks) {
       if (task.id == id) return task;
     }
     return null;
+  }
+
+  void _update(String id, bool Function(Task task) mutate) {
+    final task = _taskById(id);
+    if (task == null) return;
+    if (mutate(task)) notifyListeners();
   }
 
   void addTask(String title, {TaskPriority priority = TaskPriority.medium}) {
@@ -22,27 +32,28 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void setPriority(String id, TaskPriority priority) {
-    final task = _taskById(id);
-    if (task != null) {
+    _update(id, (task) {
+      if (task.isDone) return false;
       task.priority = priority;
-      notifyListeners();
-    }
+      return true;
+    });
   }
 
   void editTask(String id, String newTitle) {
-    final task = _taskById(id);
-    if (task != null && newTitle.trim().isNotEmpty) {
-      task.title = newTitle.trim();
-      notifyListeners();
-    }
+    final title = newTitle.trim();
+    if (title.isEmpty) return;
+    _update(id, (task) {
+      if (task.isDone) return false;
+      task.title = title;
+      return true;
+    });
   }
 
   void toggleDone(String id) {
-    final task = _taskById(id);
-    if (task != null) {
+    _update(id, (task) {
       task.isDone = !task.isDone;
-      notifyListeners();
-    }
+      return true;
+    });
   }
 
   void deleteTask(String id) {

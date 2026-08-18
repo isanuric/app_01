@@ -7,17 +7,76 @@ import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../services/time_service.dart';
 
-String _formatDate(DateTime dt) =>
-    '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+String _pad2(int n) => n.toString().padLeft(2, '0');
 
-String _formatTime(DateTime dt) =>
-    '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+String _formatDate(DateTime dt) =>
+    '${_pad2(dt.day)}.${_pad2(dt.month)}.${dt.year}';
+
+String _formatTime(DateTime dt) => '${_pad2(dt.hour)}:${_pad2(dt.minute)}';
 
 Color _priorityColor(TaskPriority priority) => switch (priority) {
   TaskPriority.low => Colors.green,
   TaskPriority.medium => Colors.orange,
   TaskPriority.high => Colors.red,
 };
+
+final _doneTaskBorderColor = Colors.grey.withAlpha(100);
+final _deleteIconColor = Colors.red.withAlpha(150);
+
+class _ClockTitle extends StatefulWidget {
+  const _ClockTitle();
+
+  @override
+  State<_ClockTitle> createState() => _ClockTitleState();
+}
+
+class _ClockTitleState extends State<_ClockTitle> {
+  final _timeService = const TimeService();
+  late Future<DateTime> _dateTimeFuture;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateTimeFuture = _timeService.fetchDateTime();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      setState(() {
+        _dateTimeFuture = _timeService.fetchDateTime();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DateTime>(
+      future: _dateTimeFuture,
+      builder: (context, snapshot) {
+        final dateTime = snapshot.data;
+        final dateStr = dateTime == null
+            ? 'Loading date...'
+            : _formatDate(dateTime);
+        final timeStr = dateTime == null ? '' : _formatTime(dateTime);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('My Tasks'),
+            Text(
+              '$dateStr $timeStr',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -29,44 +88,11 @@ class TodoScreen extends StatefulWidget {
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
   final _editController = TextEditingController();
-  final _timeService = const TimeService();
-  late Future<DateTime> _dateTimeFuture;
-  Timer? _timer;
   String? _editingTaskId;
-  late Color _hintTextColor;
-  late Color _doneTaskBorderColor;
-  late Color _deleteIconColor;
-  late Color _emptyStateIconColor;
-  late Color _shadowColor;
   final _borderRadius = BorderRadius.circular(12);
-  bool _colorsInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _dateTimeFuture = _timeService.fetchDateTime();
-
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      setState(() {
-        _dateTimeFuture = _timeService.fetchDateTime();
-      });
-    });
-  }
-
-  void _initializeColors() {
-    if (_colorsInitialized) return;
-    final colors = Theme.of(context).colorScheme;
-    _hintTextColor = colors.onSurface.withAlpha(100);
-    _doneTaskBorderColor = Colors.grey.withAlpha(100);
-    _deleteIconColor = Colors.red.withAlpha(150);
-    _emptyStateIconColor = colors.primary.withAlpha(100);
-    _shadowColor = colors.primary.withAlpha(100);
-    _colorsInitialized = true;
-  }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _textEditingController.dispose();
     _editController.dispose();
     super.dispose();
@@ -97,35 +123,18 @@ class _TodoScreenState extends State<TodoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _initializeColors();
-    final tasks = context.watch<TaskProvider>().tasks;
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final taskProvider = context.watch<TaskProvider>();
+    final tasks = taskProvider.tasks;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final hintTextColor = colors.onSurface.withAlpha(100);
+    final emptyStateIconColor = colors.primary.withAlpha(100);
+    final shadowColor = colors.primary.withAlpha(100);
 
     return Scaffold(
       appBar: AppBar(
-        title: FutureBuilder<DateTime>(
-          future: _dateTimeFuture,
-          builder: (context, snapshot) {
-            final dateTime = snapshot.data;
-            final dateStr = dateTime == null
-                ? 'Loading date...'
-                : _formatDate(dateTime);
-            final timeStr = dateTime == null ? '' : _formatTime(dateTime);
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('My Tasks'),
-                Text(
-                  '$dateStr $timeStr',
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ],
-            );
-          },
-        ),
-        elevation: 0,
+        title: const _ClockTitle(),
         centerTitle: true,
       ),
       body: Container(
@@ -148,7 +157,7 @@ class _TodoScreenState extends State<TodoScreen> {
                       style: TextStyle(color: colors.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Add new task',
-                        hintStyle: TextStyle(color: _hintTextColor),
+                        hintStyle: TextStyle(color: hintTextColor),
                         border: OutlineInputBorder(borderRadius: _borderRadius),
                         filled: true,
                         fillColor: colors.surface,
@@ -166,7 +175,7 @@ class _TodoScreenState extends State<TodoScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: _shadowColor,
+                          color: shadowColor,
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -184,7 +193,7 @@ class _TodoScreenState extends State<TodoScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: colors.surface.withAlpha(120),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: _borderRadius,
               ),
               child: Row(
                 children: [
@@ -192,7 +201,7 @@ class _TodoScreenState extends State<TodoScreen> {
                   SizedBox(
                     width: 40,
                     child: Checkbox(
-                      value: tasks.isNotEmpty && tasks.every((t) => t.isDone),
+                      value: taskProvider.allDone,
                       onChanged: tasks.isEmpty
                           ? null
                           : (value) => context.read<TaskProvider>().setAllDone(
@@ -227,7 +236,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           Icon(
                             Icons.check_circle_outline,
                             size: 64,
-                            color: _emptyStateIconColor,
+                            color: emptyStateIconColor,
                           ),
                           const SizedBox(height: 16),
                           Text('No tasks yet.', style: textTheme.titleLarge),
@@ -246,15 +255,14 @@ class _TodoScreenState extends State<TodoScreen> {
                         horizontal: 16,
                         vertical: 8,
                       ),
+                      buildDefaultDragHandles: false,
                       itemCount: tasks.length,
-                      onReorderItem: (oldIndex, newIndex) => context
-                          .read<TaskProvider>()
-                          .reorderTask(oldIndex, newIndex),
+                      onReorderItem: context.read<TaskProvider>().reorderTask,
                       itemBuilder: (context, index) {
                         final task = tasks[index];
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
                           key: ValueKey(task.id),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Dismissible(
                             key: ValueKey(task.id),
                             direction: DismissDirection.horizontal,
@@ -301,116 +309,120 @@ class _TodoScreenState extends State<TodoScreen> {
                               elevation: 2,
                               shape: RoundedRectangleBorder(
                                 borderRadius: _borderRadius,
+                                side: task.isDone
+                                    ? BorderSide(color: _doneTaskBorderColor)
+                                    : BorderSide.none,
                               ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: _borderRadius,
-                                  border: task.isDone
-                                      ? Border.all(color: _doneTaskBorderColor)
-                                      : null,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
                                 ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  leading: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 4,
-                                        height: 32,
-                                        decoration: BoxDecoration(
-                                          color: _priorityColor(task.priority),
-                                          borderRadius: BorderRadius.circular(
-                                            2,
-                                          ),
-                                        ),
+                                leading: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: _priorityColor(task.priority),
+                                        borderRadius: BorderRadius.circular(2),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Checkbox(
-                                        value: task.isDone,
-                                        onChanged: (_) => context
-                                            .read<TaskProvider>()
-                                            .toggleDone(task.id),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  title: _editingTaskId == task.id
-                                      ? TextField(
-                                          controller: _editController,
-                                          autofocus: true,
-                                          style: textTheme.bodyLarge,
-                                          decoration: const InputDecoration(
-                                            isDense: true,
-                                            border: InputBorder.none,
-                                          ),
-                                          onSubmitted: (_) =>
-                                              _finishEditing(task.id),
-                                          onTapOutside: (_) =>
-                                              _finishEditing(task.id),
-                                        )
-                                      : GestureDetector(
-                                          onTap: task.isDone
-                                              ? null
-                                              : () => _startEditing(
-                                                  task.id,
-                                                  task.title,
-                                                ),
-                                          child: Text(
-                                            task.title,
-                                            style: textTheme.bodyLarge
-                                                ?.copyWith(
-                                                  decoration: task.isDone
-                                                      ? TextDecoration
-                                                            .lineThrough
-                                                      : null,
-                                                  color: task.isDone
-                                                      ? Colors.grey
-                                                      : null,
-                                                ),
-                                          ),
-                                        ),
-                                  trailing: PopupMenuButton<TaskPriority>(
-                                    enabled: !task.isDone,
-                                    onSelected: (priority) => context
-                                        .read<TaskProvider>()
-                                        .setPriority(task.id, priority),
-                                    itemBuilder: (context) => [
-                                      for (final priority
-                                          in TaskPriority.values)
-                                        PopupMenuItem(
-                                          value: priority,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Container(
-                                                width: 12,
-                                                height: 12,
-                                                decoration: BoxDecoration(
-                                                  color: _priorityColor(
-                                                    priority,
-                                                  ),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(priority.name),
-                                            ],
-                                          ),
-                                        ),
-                                    ],
-                                    icon: Icon(
-                                      Icons.star_outline,
-                                      size: 20,
-                                      color: _priorityColor(task.priority),
                                     ),
-                                  ),
+                                    const SizedBox(width: 12),
+                                    Checkbox(
+                                      value: task.isDone,
+                                      onChanged: (_) => context
+                                          .read<TaskProvider>()
+                                          .toggleDone(task.id),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                title: _editingTaskId == task.id
+                                    ? TextField(
+                                        controller: _editController,
+                                        autofocus: true,
+                                        style: textTheme.bodyLarge,
+                                        decoration: const InputDecoration(
+                                          isDense: true,
+                                          border: InputBorder.none,
+                                        ),
+                                        onSubmitted: (_) =>
+                                            _finishEditing(task.id),
+                                        onTapOutside: (_) =>
+                                            _finishEditing(task.id),
+                                      )
+                                    : GestureDetector(
+                                        onTap: task.isDone
+                                            ? null
+                                            : () => _startEditing(
+                                                task.id,
+                                                task.title,
+                                              ),
+                                        child: Text(
+                                          task.title,
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            decoration: task.isDone
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                            color: task.isDone
+                                                ? Colors.grey
+                                                : null,
+                                          ),
+                                        ),
+                                      ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    PopupMenuButton<TaskPriority>(
+                                      enabled: !task.isDone,
+                                      onSelected: (priority) => context
+                                          .read<TaskProvider>()
+                                          .setPriority(task.id, priority),
+                                      itemBuilder: (context) => [
+                                        for (final priority
+                                            in TaskPriority.values)
+                                          PopupMenuItem(
+                                            value: priority,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  width: 12,
+                                                  height: 12,
+                                                  decoration: BoxDecoration(
+                                                    color: _priorityColor(
+                                                      priority,
+                                                    ),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(priority.name),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                      icon: Icon(
+                                        Icons.star_outline,
+                                        size: 20,
+                                        color: _priorityColor(task.priority),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ReorderableDragStartListener(
+                                      index: index,
+                                      child: Icon(
+                                        Icons.drag_handle,
+                                        color: colors.onSurface.withAlpha(
+                                          120,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
