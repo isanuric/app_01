@@ -3,19 +3,26 @@ import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 
 class TaskProvider extends ChangeNotifier {
-  final Map<String, Task> _tasks = {};
+  final List<Task> _tasks = [];
 
-  List<Task> get tasks => _tasks.values.toList();
+  List<Task> get tasks => List.unmodifiable(_tasks);
+
+  Task? _taskById(String id) {
+    for (final task in _tasks) {
+      if (task.id == id) return task;
+    }
+    return null;
+  }
 
   void addTask(String title, {TaskPriority priority = TaskPriority.medium}) {
     if (title.trim().isEmpty) return;
     final id = DateTime.now().microsecondsSinceEpoch.toString();
-    _tasks[id] = Task(id: id, title: title.trim(), priority: priority);
+    _tasks.add(Task(id: id, title: title.trim(), priority: priority));
     notifyListeners();
   }
 
   void setPriority(String id, TaskPriority priority) {
-    final task = _tasks[id];
+    final task = _taskById(id);
     if (task != null) {
       task.priority = priority;
       notifyListeners();
@@ -23,7 +30,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void editTask(String id, String newTitle) {
-    final task = _tasks[id];
+    final task = _taskById(id);
     if (task != null && newTitle.trim().isNotEmpty) {
       task.title = newTitle.trim();
       notifyListeners();
@@ -31,7 +38,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void toggleDone(String id) {
-    final task = _tasks[id];
+    final task = _taskById(id);
     if (task != null) {
       task.isDone = !task.isDone;
       notifyListeners();
@@ -39,12 +46,18 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void deleteTask(String id) {
-    _tasks.remove(id);
+    _tasks.removeWhere((task) => task.id == id);
+    notifyListeners();
+  }
+
+  void reorderTask(int oldIndex, int newIndex) {
+    final task = _tasks.removeAt(oldIndex);
+    _tasks.insert(newIndex, task);
     notifyListeners();
   }
 
   void setAllDone(bool done) {
-    for (final task in _tasks.values) {
+    for (final task in _tasks) {
       task.isDone = done;
     }
     notifyListeners();
