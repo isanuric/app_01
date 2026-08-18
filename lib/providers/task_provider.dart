@@ -22,6 +22,14 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
+  void editTask(String id, String newTitle) {
+    final task = _tasks[id];
+    if (task != null && newTitle.trim().isNotEmpty) {
+      task.title = newTitle.trim();
+      notifyListeners();
+    }
+  }
+
   void toggleDone(String id) {
     final task = _tasks[id];
     if (task != null) {

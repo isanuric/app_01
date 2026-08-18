@@ -28,9 +28,11 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
+  final _editController = TextEditingController();
   final _timeService = const TimeService();
   late Future<DateTime> _dateTimeFuture;
   Timer? _timer;
+  String? _editingTaskId;
   late Color _hintTextColor;
   late Color _doneTaskBorderColor;
   late Color _deleteIconColor;
@@ -66,12 +68,31 @@ class _TodoScreenState extends State<TodoScreen> {
   void dispose() {
     _timer?.cancel();
     _textEditingController.dispose();
+    _editController.dispose();
     super.dispose();
   }
 
   void _submit() {
     context.read<TaskProvider>().addTask(_textEditingController.text);
     _textEditingController.clear();
+  }
+
+  void _startEditing(String id, String title) {
+    setState(() {
+      _editingTaskId = id;
+      _editController.text = title;
+    });
+  }
+
+  void _finishEditing(String id) {
+    final title = _editController.text.trim();
+    if (_editingTaskId != id) return;
+    if (title.isNotEmpty) {
+      context.read<TaskProvider>().editTask(id, title);
+    }
+    setState(() {
+      _editingTaskId = null;
+    });
   }
 
   @override
@@ -236,14 +257,20 @@ class _TodoScreenState extends State<TodoScreen> {
                           child: Dismissible(
                             key: ValueKey(task.id),
                             direction: DismissDirection.horizontal,
-                            onDismissed: (_) => context
-                                .read<TaskProvider>()
-                                .deleteTask(task.id),
+                            onDismissed: (_) {
+                              if (_editingTaskId == task.id) {
+                                _editingTaskId = null;
+                              }
+                              context
+                                  .read<TaskProvider>()
+                                  .deleteTask(task.id);
+                            },
                             confirmDismiss: (direction) async {
                               if (direction == DismissDirection.startToEnd) {
                                 context
                                     .read<TaskProvider>()
                                     .toggleDone(task.id);
+                                return false;
                               }
                               return true;
                             },
@@ -314,15 +341,40 @@ child: ListTile(
                                     ),
                                   ],
                                 ),
-                                title: Text(
-                                  task.title,
-                                  style: textTheme.bodyLarge?.copyWith(
-                                    decoration: task.isDone
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: task.isDone ? Colors.grey : null,
-                                  ),
-                                ),
+                                title: _editingTaskId == task.id
+                                    ? TextField(
+                                        controller: _editController,
+                                        autofocus: true,
+                                        style: textTheme.bodyLarge,
+                                        decoration: const InputDecoration(
+                                          isDense: true,
+                                          border: InputBorder.none,
+                                        ),
+                                        onSubmitted: (_) =>
+                                            _finishEditing(task.id),
+                                        onTapOutside: (_) =>
+                                            _finishEditing(task.id),
+                                      )
+                                    : GestureDetector(
+                                        onTap: task.isDone
+                                            ? null
+                                            : () => _startEditing(
+                                                task.id,
+                                                task.title,
+                                              ),
+                                        child: Text(
+                                          task.title,
+                                          style: textTheme.bodyLarge
+                                              ?.copyWith(
+                                            decoration: task.isDone
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                            color: task.isDone
+                                                ? Colors.grey
+                                                : null,
+                                          ),
+                                        ),
+                                      ),
                                 trailing: PopupMenuButton<TaskPriority>(
                                   enabled: !task.isDone,
                                   onSelected: (priority) => context

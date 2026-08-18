@@ -9,7 +9,7 @@ class Task {
   });
 
   final String id;
-  final String title;
+  String title;
   bool isDone;
   TaskPriority priority;
 }
