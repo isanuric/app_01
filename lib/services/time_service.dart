@@ -33,6 +33,7 @@ class TimeService {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
+
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       throw Exception('Location permissions are denied.');
