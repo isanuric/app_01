@@ -226,51 +226,81 @@ class _TodoScreenState extends State<TodoScreen> {
                         final task = tasks[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Card(
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: _borderRadius,
-                            ),
-                            child: Container(
+                          child: Dismissible(
+                            key: ValueKey(task.id),
+                            direction: DismissDirection.horizontal,
+                            onDismissed: (_) => context
+                                .read<TaskProvider>()
+                                .deleteTask(task.id),
+                            confirmDismiss: (direction) async {
+                              if (direction == DismissDirection.startToEnd) {
+                                context
+                                    .read<TaskProvider>()
+                                    .toggleDone(task.id);
+                              }
+                              return true;
+                            },
+                            background: Container(
                               decoration: BoxDecoration(
+                                color: Colors.green,
                                 borderRadius: _borderRadius,
-                                border: task.isDone
-                                    ? Border.all(
-                                        color: _doneTaskBorderColor,
-                                      )
-                                    : null,
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.only(left: 20),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                              ),
+                            ),
+                            secondaryBackground: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: _borderRadius,
+                              ),
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: _borderRadius,
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: _borderRadius,
+                                  border: task.isDone
+                                      ? Border.all(
+                                          color: _doneTaskBorderColor,
+                                        )
+                                      : null,
                                 ),
-                                leading: Checkbox(
-                                  value: task.isDone,
-                                  onChanged: (_) => context
-                                      .read<TaskProvider>()
-                                      .toggleDone(task.id),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                ),
-                                title: Text(
-                                  task.title,
-                                  style: textTheme.bodyLarge?.copyWith(
-                                    decoration: task.isDone
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: task.isDone ? Colors.grey : null,
+                                  leading: Checkbox(
+                                    value: task.isDone,
+                                    onChanged: (_) => context
+                                        .read<TaskProvider>()
+                                        .toggleDone(task.id),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
                                   ),
-                                ),
-                                trailing: IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    color: _deleteIconColor,
+                                  title: Text(
+                                    task.title,
+                                    style: textTheme.bodyLarge?.copyWith(
+                                      decoration: task.isDone
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      color: task.isDone ? Colors.grey : null,
+                                    ),
                                   ),
-                                  onPressed: () => context
-                                      .read<TaskProvider>()
-                                      .deleteTask(task.id),
                                 ),
                               ),
                             ),
