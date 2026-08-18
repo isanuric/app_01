@@ -152,11 +152,15 @@ class _TodoScreenState extends State<TodoScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: colors.surface.withAlpha(120),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 8),
                   SizedBox(
                     width: 40,
                     child: Checkbox(
@@ -171,6 +175,18 @@ class _TodoScreenState extends State<TodoScreen> {
                   const SizedBox(width: 4),
                   const Text('Select All'),
                   const Spacer(),
+                  const Text('Delete all'),
+                  IconButton(
+                    onPressed: tasks.isEmpty
+                        ? null
+                        : () => context.read<TaskProvider>().deleteAll(),
+                    icon: Icon(
+                      Icons.delete_sweep_outlined,
+                      color: _deleteIconColor,
+                    ),
+                    tooltip: 'Delete all',
+                  ),
+                  const SizedBox(width: 8),
                 ],
               ),
             ),

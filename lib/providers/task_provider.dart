@@ -33,4 +33,9 @@ class TaskProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void deleteAll() {
+    _tasks.clear();
+    notifyListeners();
+  }
 }
