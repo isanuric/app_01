@@ -7,7 +7,13 @@ import '../models/task.dart';
 class TaskProvider extends ChangeNotifier {
   final List<Task> _tasks = [];
 
+  TaskCategory? activeFilter;
+
   List<Task> get tasks => UnmodifiableListView(_tasks);
+
+  List<Task> get filteredTasks => activeFilter == null
+      ? tasks
+      : UnmodifiableListView(_tasks.where((t) => t.category == activeFilter));
 
   bool get allDone => _tasks.isNotEmpty && _tasks.every((t) => t.isDone);
 
@@ -28,10 +34,16 @@ class TaskProvider extends ChangeNotifier {
     if (mutate(task)) notifyListeners();
   }
 
-  void addTask(String title, {TaskPriority priority = TaskPriority.medium}) {
+  void addTask(
+    String title, {
+    TaskPriority priority = TaskPriority.medium,
+    TaskCategory category = TaskCategory.other,
+  }) {
     if (title.trim().isEmpty) return;
     final id = DateTime.now().microsecondsSinceEpoch.toString();
-    _tasks.add(Task(id: id, title: title.trim(), priority: priority));
+    _tasks.add(
+      Task(id: id, title: title.trim(), priority: priority, category: category),
+    );
     notifyListeners();
   }
 
@@ -41,6 +53,19 @@ class TaskProvider extends ChangeNotifier {
       task.priority = priority;
       return true;
     });
+  }
+
+  void setCategory(String id, TaskCategory category) {
+    _update(id, (task) {
+      if (task.isDone) return false;
+      task.category = category;
+      return true;
+    });
+  }
+
+  void setFilter(TaskCategory? category) {
+    activeFilter = category;
+    notifyListeners();
   }
 
   void editTask(String id, String newTitle) {
@@ -66,8 +91,24 @@ class TaskProvider extends ChangeNotifier {
   }
 
   void reorderTask(int oldIndex, int newIndex) {
-    final task = _tasks.removeAt(oldIndex);
-    _tasks.insert(newIndex, task);
+    final visible = filteredTasks;
+    if (oldIndex < 0 ||
+        oldIndex >= visible.length ||
+        newIndex < 0 ||
+        newIndex >= visible.length) {
+      return;
+    }
+    if (activeFilter == null) {
+      final task = _tasks.removeAt(oldIndex);
+      _tasks.insert(newIndex, task);
+    } else {
+      final moved = visible[oldIndex];
+      _tasks.remove(moved);
+      _tasks.insert(
+        _tasks.indexWhere((t) => t.id == visible[newIndex].id),
+        moved,
+      );
+    }
     notifyListeners();
   }
 
