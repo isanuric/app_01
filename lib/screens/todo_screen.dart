@@ -133,10 +133,7 @@ class _TodoScreenState extends State<TodoScreen> {
     final shadowColor = colors.primary.withAlpha(100);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const _ClockTitle(),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const _ClockTitle(), centerTitle: true),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -227,6 +224,35 @@ class _TodoScreenState extends State<TodoScreen> {
                 ],
               ),
             ),
+            if (taskProvider.totalCount > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${taskProvider.doneCount}/${taskProvider.totalCount} erledigt',
+                          style: textTheme.labelMedium,
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${(taskProvider.doneCount / taskProvider.totalCount * 100).round()}%',
+                          style: textTheme.labelMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: taskProvider.totalCount == 0
+                          ? 0
+                          : taskProvider.doneCount / taskProvider.totalCount,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: tasks.isEmpty
                   ? Center(
@@ -417,9 +443,7 @@ class _TodoScreenState extends State<TodoScreen> {
                                       index: index,
                                       child: Icon(
                                         Icons.drag_handle,
-                                        color: colors.onSurface.withAlpha(
-                                          120,
-                                        ),
+                                        color: colors.onSurface.withAlpha(120),
                                       ),
                                     ),
                                   ],

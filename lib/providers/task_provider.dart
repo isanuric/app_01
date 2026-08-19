@@ -11,6 +11,10 @@ class TaskProvider extends ChangeNotifier {
 
   bool get allDone => _tasks.isNotEmpty && _tasks.every((t) => t.isDone);
 
+  int get totalCount => _tasks.length;
+
+  int get doneCount => _tasks.where((t) => t.isDone).length;
+
   Task? _taskById(String id) {
     for (final task in _tasks) {
       if (task.id == id) return task;
