@@ -37,7 +37,7 @@ class TaskProvider extends ChangeNotifier {
   void addTask(
     String title, {
     TaskPriority priority = TaskPriority.medium,
-    TaskCategory category = TaskCategory.other,
+    TaskCategory category = TaskCategory.shopping,
   }) {
     if (title.trim().isEmpty) return;
     final id = DateTime.now().microsecondsSinceEpoch.toString();

@@ -8,7 +8,7 @@ class Task {
     required this.title,
     this.isDone = false,
     this.priority = TaskPriority.medium,
-    this.category = TaskCategory.other,
+    this.category = TaskCategory.shopping,
   });
 
   final String id;

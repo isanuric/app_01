@@ -95,15 +95,26 @@ class TodoScreen extends StatefulWidget {
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
   final _editController = TextEditingController();
+  final _listController = ScrollController();
   String? _editingTaskId;
-  TaskCategory _newCategory = TaskCategory.other;
+  TaskCategory _newCategory = TaskCategory.shopping;
   final _borderRadius = BorderRadius.circular(12);
 
   @override
   void dispose() {
     _textEditingController.dispose();
     _editController.dispose();
+    _listController.dispose();
     super.dispose();
+  }
+
+  void _scrollToEnd() {
+    if (!_listController.hasClients) return;
+    _listController.animateTo(
+      _listController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   void _submit() {
@@ -112,6 +123,9 @@ class _TodoScreenState extends State<TodoScreen> {
       category: _newCategory,
     );
     _textEditingController.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 250), _scrollToEnd);
+    });
   }
 
   void _startEditing(String id, String title) {
@@ -156,75 +170,6 @@ class _TodoScreenState extends State<TodoScreen> {
         ),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textEditingController,
-                      style: TextStyle(color: colors.onSurface),
-                      decoration: InputDecoration(
-                        hintText: 'Add new task',
-                        hintStyle: TextStyle(color: hintTextColor),
-                        border: OutlineInputBorder(borderRadius: _borderRadius),
-                        filled: true,
-                        fillColor: colors.surface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                      onSubmitted: (_) => _submit(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  PopupMenuButton<TaskCategory>(
-                    onSelected: (category) =>
-                        setState(() => _newCategory = category),
-                    itemBuilder: (context) => [
-                      for (final category in TaskCategory.values)
-                        PopupMenuItem(
-                          value: category,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _categoryStyle(category).$2,
-                                size: 18,
-                                color: _categoryStyle(category).$1,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(category.name),
-                            ],
-                          ),
-                        ),
-                    ],
-                    icon: Icon(
-                      _categoryStyle(_newCategory).$2,
-                      color: _categoryStyle(_newCategory).$1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: shadowColor,
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: IconButton.filled(
-                      onPressed: _submit,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -292,336 +237,505 @@ class _TodoScreenState extends State<TodoScreen> {
                   ],
                 ),
               ),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, top: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        RotatedBox(
-                          quarterTurns: 3,
-                          child: FilterChip(
-                            label: const Text('All'),
-                            selected: taskProvider.activeFilter == null,
-                            onSelected: (_) =>
-                                context.read<TaskProvider>().setFilter(null),
+                  FilterChip(
+                    label: const Text('All'),
+                    selected: taskProvider.activeFilter == null,
+                    onSelected: (_) =>
+                        context.read<TaskProvider>().setFilter(null),
+                  ),
+                  for (final category in [
+                    TaskCategory.shopping,
+                    TaskCategory.personal,
+                    TaskCategory.work,
+                    TaskCategory.other,
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: taskProvider.activeFilter == category
+                                ? _categoryStyle(category).$1
+                                : Colors.grey.withAlpha(100),
                           ),
+                          borderRadius: BorderRadius.circular(16),
+                          color: taskProvider.activeFilter == category
+                              ? _categoryStyle(category).$1.withAlpha(20)
+                              : Colors.transparent,
                         ),
-                        for (final category in [
-                          TaskCategory.personal,
-                          TaskCategory.shopping,
-                          TaskCategory.work,
-                          TaskCategory.other,
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: RotatedBox(
-                              quarterTurns: 3,
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxHeight: 64,
-                                ),
-                                child: FilterChip(
-                                  avatar: Icon(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => context.read<TaskProvider>().setFilter(
+                              category,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
                                     _categoryStyle(category).$2,
                                     size: 16,
                                     color: _categoryStyle(category).$1,
                                   ),
-                                  label: Text(category.name),
-                                  selected:
-                                      taskProvider.activeFilter == category,
-                                  onSelected: (_) => context
-                                      .read<TaskProvider>()
-                                      .setFilter(category),
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: visibleTasks.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  size: 64,
-                                  color: emptyStateIconColor,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  tasks.isEmpty
-                                      ? 'No tasks yet.'
-                                      : 'No tasks in this category.',
-                                  style: textTheme.titleLarge,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Add a new task to get started',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
+                ],
+              ),
+            ),
+            Expanded(
+              child: visibleTasks.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 64,
+                            color: emptyStateIconColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            tasks.isEmpty
+                                ? 'No tasks yet.'
+                                : 'No tasks in this category.',
+                            style: textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add a new task to get started',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
                             ),
-                          )
-                        : ReorderableListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            buildDefaultDragHandles: false,
-                            itemCount: visibleTasks.length,
-                            onReorderItem: context
-                                .read<TaskProvider>()
-                                .reorderTask,
-                            itemBuilder: (context, index) {
-                              final task = visibleTasks[index];
-                              return Padding(
+                          ),
+                        ],
+                      ),
+                    )
+                  : ReorderableListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      buildDefaultDragHandles: false,
+                      scrollController: _listController,
+                      itemCount: visibleTasks.length,
+                      onReorderItem: context.read<TaskProvider>().reorderTask,
+                      itemBuilder: (context, index) {
+                        final task = visibleTasks[index];
+                        return Padding(
+                          key: ValueKey(task.id),
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 520),
+                              child: Dismissible(
                                 key: ValueKey(task.id),
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Dismissible(
-                                  key: ValueKey(task.id),
-                                  direction: DismissDirection.horizontal,
-                                  onDismissed: (_) {
-                                    if (_editingTaskId == task.id) {
-                                      _editingTaskId = null;
-                                    }
-                                    context.read<TaskProvider>().deleteTask(
+                                direction: DismissDirection.horizontal,
+                                onDismissed: (_) {
+                                  if (_editingTaskId == task.id) {
+                                    _editingTaskId = null;
+                                  }
+                                  context.read<TaskProvider>().deleteTask(
+                                    task.id,
+                                  );
+                                },
+                                confirmDismiss: (direction) async {
+                                  if (direction ==
+                                      DismissDirection.startToEnd) {
+                                    context.read<TaskProvider>().toggleDone(
                                       task.id,
                                     );
-                                  },
-                                  confirmDismiss: (direction) async {
-                                    if (direction ==
-                                        DismissDirection.startToEnd) {
-                                      context.read<TaskProvider>().toggleDone(
-                                        task.id,
-                                      );
-                                      return false;
-                                    }
-                                    return true;
-                                  },
-                                  background: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: _borderRadius,
-                                    ),
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: const Icon(
-                                      Icons.check,
-                                      color: Colors.white,
-                                    ),
+                                    return false;
+                                  }
+                                  return true;
+                                },
+                                background: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: _borderRadius,
                                   ),
-                                  secondaryBackground: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: _borderRadius,
-                                    ),
-                                    alignment: Alignment.centerRight,
-                                    padding: const EdgeInsets.only(right: 20),
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: Colors.white,
-                                    ),
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
                                   ),
-                                  child: Card(
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: _borderRadius,
-                                      side: task.isDone
-                                          ? BorderSide(
-                                              color: _doneTaskBorderColor,
-                                            )
-                                          : BorderSide.none,
+                                ),
+                                secondaryBackground: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: _borderRadius,
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: const Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                child: Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: _borderRadius,
+                                    side: task.isDone
+                                        ? BorderSide(
+                                            color: _doneTaskBorderColor,
+                                          )
+                                        : BorderSide.none,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
                                     ),
-                                    child: ListTile(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 8,
-                                          ),
-                                      leading: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 4,
-                                            height: 32,
-                                            decoration: BoxDecoration(
-                                              color: _priorityColor(
-                                                task.priority,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: _priorityColor(
+                                              task.priority,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              2,
                                             ),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Checkbox(
-                                            value: task.isDone,
-                                            onChanged: (_) => context
-                                                .read<TaskProvider>()
-                                                .toggleDone(task.id),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      title: _editingTaskId == task.id
-                                          ? TextField(
-                                              controller: _editController,
-                                              autofocus: true,
-                                              style: textTheme.bodyLarge,
-                                              decoration: const InputDecoration(
-                                                isDense: true,
-                                                border: InputBorder.none,
-                                              ),
-                                              onSubmitted: (_) =>
-                                                  _finishEditing(task.id),
-                                              onTapOutside: (_) =>
-                                                  _finishEditing(task.id),
-                                            )
-                                          : GestureDetector(
-                                              onTap: task.isDone
-                                                  ? null
-                                                  : () => _startEditing(
-                                                      task.id,
-                                                      task.title,
-                                                    ),
-                                              child: Text(
-                                                task.title,
-                                                style: textTheme.bodyLarge
-                                                    ?.copyWith(
-                                                      decoration: task.isDone
-                                                          ? TextDecoration
-                                                                .lineThrough
-                                                          : null,
-                                                      color: task.isDone
-                                                          ? Colors.grey
-                                                          : null,
-                                                    ),
-                                              ),
-                                            ),
-                                      subtitle: PopupMenuButton<TaskCategory>(
-                                        padding: EdgeInsets.zero,
-                                        tooltip: 'Change category',
-                                        enabled: !task.isDone,
-                                        onSelected: (category) => context
-                                            .read<TaskProvider>()
-                                            .setCategory(task.id, category),
-                                        itemBuilder: (context) => [
-                                          for (final category
-                                              in TaskCategory.values)
-                                            PopupMenuItem(
-                                              value: category,
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    _categoryStyle(category).$2,
-                                                    size: 18,
-                                                    color: _categoryStyle(
-                                                      category,
-                                                    ).$1,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(category.name),
-                                                ],
-                                              ),
-                                            ),
-                                        ],
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              _categoryStyle(task.category).$2,
-                                              size: 14,
-                                              color: _categoryStyle(
-                                                task.category,
-                                              ).$1,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              task.category.name,
-                                              style: textTheme.labelSmall
-                                                  ?.copyWith(
-                                                    color: _categoryStyle(
-                                                      task.category,
-                                                    ).$1,
-                                                  ),
-                                            ),
-                                          ],
                                         ),
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          PopupMenuButton<TaskPriority>(
-                                            enabled: !task.isDone,
-                                            onSelected: (priority) => context
-                                                .read<TaskProvider>()
-                                                .setPriority(task.id, priority),
-                                            itemBuilder: (context) => [
-                                              for (final priority
-                                                  in TaskPriority.values)
-                                                PopupMenuItem(
-                                                  value: priority,
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Container(
-                                                        width: 12,
-                                                        height: 12,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                              color:
-                                                                  _priorityColor(
-                                                                    priority,
-                                                                  ),
-                                                              shape: BoxShape
-                                                                  .circle,
+                                        Checkbox(
+                                          value: task.isDone,
+                                          visualDensity: VisualDensity.compact,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          onChanged: (_) => context
+                                              .read<TaskProvider>()
+                                              .toggleDone(task.id),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              _editingTaskId == task.id
+                                                  ? TextField(
+                                                      controller:
+                                                          _editController,
+                                                      autofocus: true,
+                                                      style:
+                                                          textTheme.bodyLarge,
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            isDense: true,
+                                                            border: InputBorder
+                                                                .none,
+                                                          ),
+                                                      onSubmitted: (_) =>
+                                                          _finishEditing(
+                                                            task.id,
+                                                          ),
+                                                      onTapOutside: (_) =>
+                                                          _finishEditing(
+                                                            task.id,
+                                                          ),
+                                                    )
+                                                  : GestureDetector(
+                                                      onTap: task.isDone
+                                                          ? null
+                                                          : () => _startEditing(
+                                                              task.id,
+                                                              task.title,
+                                                            ),
+                                                      child: Text(
+                                                        task.title,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: textTheme
+                                                            .bodyLarge
+                                                            ?.copyWith(
+                                                              decoration:
+                                                                  task.isDone
+                                                                  ? TextDecoration
+                                                                        .lineThrough
+                                                                  : null,
+                                                              color: task.isDone
+                                                                  ? Colors.grey
+                                                                  : null,
                                                             ),
                                                       ),
-                                                      const SizedBox(width: 8),
-                                                      Text(priority.name),
-                                                    ],
+                                                    ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: PopupMenuButton<TaskCategory>(
+                                                      padding: EdgeInsets.zero,
+                                                      tooltip:
+                                                          'Change category',
+                                                      enabled: !task.isDone,
+                                                      onSelected: (category) =>
+                                                          context
+                                                              .read<
+                                                                TaskProvider
+                                                              >()
+                                                              .setCategory(
+                                                                task.id,
+                                                                category,
+                                                              ),
+                                                      itemBuilder: (context) => [
+                                                        for (final category
+                                                            in TaskCategory
+                                                                .values)
+                                                          PopupMenuItem(
+                                                            value: category,
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Icon(
+                                                                  _categoryStyle(
+                                                                    category,
+                                                                  ).$2,
+                                                                  size: 18,
+                                                                  color:
+                                                                      _categoryStyle(
+                                                                        category,
+                                                                      ).$1,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 8,
+                                                                ),
+                                                                Text(
+                                                                  category.name,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                      ],
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Icon(
+                                                            _categoryStyle(
+                                                              task.category,
+                                                            ).$2,
+                                                            size: 14,
+                                                            color:
+                                                                _categoryStyle(
+                                                                  task.category,
+                                                                ).$1,
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 4,
+                                                          ),
+                                                          Flexible(
+                                                            child: Text(
+                                                              task
+                                                                  .category
+                                                                  .name,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: textTheme
+                                                                  .labelSmall
+                                                                  ?.copyWith(
+                                                                    color: _categoryStyle(
+                                                                      task.category,
+                                                                    ).$1,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
-                                            ],
-                                            icon: Icon(
-                                              Icons.star_outline,
-                                              size: 20,
-                                              color: _priorityColor(
-                                                task.priority,
+                                                  SizedBox(
+                                                    height: 24,
+                                                    width: 24,
+                                                    child: PopupMenuButton<TaskPriority>(
+                                                      padding: EdgeInsets.zero,
+                                                      enabled: !task.isDone,
+                                                      onSelected: (priority) =>
+                                                          context
+                                                              .read<
+                                                                TaskProvider
+                                                              >()
+                                                              .setPriority(
+                                                                task.id,
+                                                                priority,
+                                                              ),
+                                                      itemBuilder: (context) => [
+                                                        for (final priority
+                                                            in TaskPriority
+                                                                .values)
+                                                          PopupMenuItem(
+                                                            value: priority,
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Container(
+                                                                  width: 12,
+                                                                  height: 12,
+                                                                  decoration: BoxDecoration(
+                                                                    color: _priorityColor(
+                                                                      priority,
+                                                                    ),
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 8,
+                                                                ),
+                                                                Text(
+                                                                  priority.name,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                      ],
+                                                      icon: Icon(
+                                                        Icons.star_outline,
+                                                        size: 16,
+                                                        color: _priorityColor(
+                                                          task.priority,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 8),
-                                          ReorderableDragStartListener(
-                                            index: index,
+                                        ),
+                                        ReorderableDragStartListener(
+                                          index: index,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 4,
+                                              top: 10,
+                                            ),
                                             child: Icon(
                                               Icons.drag_handle,
+                                              size: 18,
                                               color: colors.onSurface.withAlpha(
                                                 120,
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textEditingController,
+                      style: TextStyle(color: colors.onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Add new task',
+                        hintStyle: TextStyle(color: hintTextColor),
+                        border: OutlineInputBorder(borderRadius: _borderRadius),
+                        filled: true,
+                        fillColor: colors.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                      ),
+                      onSubmitted: (_) => _submit(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  PopupMenuButton<TaskCategory>(
+                    onSelected: (category) =>
+                        setState(() => _newCategory = category),
+                    itemBuilder: (context) => [
+                      for (final category in TaskCategory.values)
+                        PopupMenuItem(
+                          value: category,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _categoryStyle(category).$2,
+                                size: 18,
+                                color: _categoryStyle(category).$1,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(category.name),
+                            ],
+                          ),
+                        ),
+                    ],
+                    icon: Icon(
+                      _categoryStyle(_newCategory).$2,
+                      size: 18,
+                      color: _categoryStyle(_newCategory).$1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor,
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: IconButton.filled(
+                        onPressed: _submit,
+                        padding: const EdgeInsets.all(8),
+                        icon: const Icon(Icons.add, size: 20),
+                      ),
+                    ),
                   ),
                 ],
               ),
