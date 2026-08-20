@@ -692,7 +692,12 @@ class _TodoScreenState extends State<TodoScreen> {
                     onSelected: (category) =>
                         setState(() => _newCategory = category),
                     itemBuilder: (context) => [
-                      for (final category in TaskCategory.values)
+                      for (final category in [
+                        TaskCategory.other,
+                        TaskCategory.work,
+                        TaskCategory.personal,
+                        TaskCategory.shopping,
+                      ])
                         PopupMenuItem(
                           value: category,
                           child: Row(
@@ -700,7 +705,7 @@ class _TodoScreenState extends State<TodoScreen> {
                             children: [
                               Icon(
                                 _categoryStyle(category).$2,
-                                size: 18,
+                                size: 14,
                                 color: _categoryStyle(category).$1,
                               ),
                               const SizedBox(width: 8),
@@ -711,14 +716,15 @@ class _TodoScreenState extends State<TodoScreen> {
                     ],
                     icon: Icon(
                       _categoryStyle(_newCategory).$2,
-                      size: 18,
+                      size: 14,
                       color: _categoryStyle(_newCategory).$1,
                     ),
+                    padding: const EdgeInsets.all(4),
                   ),
                   const SizedBox(width: 8),
                   SizedBox(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -732,8 +738,8 @@ class _TodoScreenState extends State<TodoScreen> {
                       ),
                       child: IconButton.filled(
                         onPressed: _submit,
-                        padding: const EdgeInsets.all(8),
-                        icon: const Icon(Icons.add, size: 20),
+                        padding: const EdgeInsets.all(6),
+                        icon: const Icon(Icons.add, size: 18),
                       ),
                     ),
                   ),
