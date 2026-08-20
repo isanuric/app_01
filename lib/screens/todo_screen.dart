@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../app_constants.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/time_service.dart';
 import '../widgets/task_card.dart';
 
@@ -126,7 +127,23 @@ class _TodoScreenState extends State<TodoScreen> {
     final newCategoryStyle = categoryStyle(_newCategory);
 
     return Scaffold(
-      appBar: AppBar(title: const _ClockTitle(), centerTitle: true),
+      appBar: AppBar(
+        title: const _ClockTitle(),
+        centerTitle: true,
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) {
+              final isDark = themeProvider.mode == ThemeMode.dark;
+              return IconButton(
+                onPressed: themeProvider.toggle,
+                icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+                tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
