@@ -7,8 +7,8 @@ import 'package:task_manager/services/task_store.dart';
 void main() {
   testWidgets('Add, complete and delete a task', (WidgetTester tester) async {
     // Isolated store so the test never touches real user data.
-    final store = TaskStore(
-      fileName: 'test_widget_${DateTime.now().microsecondsSinceEpoch}.json',
+    final store = TaskStore.forTest(
+      'test_widget_${DateTime.now().microsecondsSinceEpoch}.json',
     );
     addTearDown(store.deleteTestFile);
 

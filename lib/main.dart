@@ -18,21 +18,27 @@ ThemeData _buildTheme(Brightness brightness) => ThemeData(
   appBarTheme: _appBarTheme,
 );
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = await TaskStore.create();
+  final themeStore = await ThemeStore.create();
+  runApp(MyApp(store: store, themeStore: themeStore));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, this.store});
+  const MyApp({super.key, this.store, this.themeStore});
 
   final TaskStore? store;
+  final ThemeStore? themeStore;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TaskProvider(store: store)),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(store: themeStore),
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) => MaterialApp(

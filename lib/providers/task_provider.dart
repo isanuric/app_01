@@ -7,7 +7,7 @@ import '../services/task_store.dart';
 
 class TaskProvider extends ChangeNotifier {
   TaskProvider({TaskStore? store})
-    : _store = store ?? TaskStore() {
+    : _store = store ?? TaskStore.forTest('tasks.json') {
     _tasks.addAll(_store.loadSync());
   }
 

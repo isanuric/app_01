@@ -10,7 +10,7 @@ void main() {
   test('Tasks are persisted across provider instances', () {
     final fileName =
         'test_tasks_${DateTime.now().microsecondsSinceEpoch}.json';
-    final store = TaskStore(fileName: fileName);
+    final store = TaskStore.forTest(fileName);
 
     final provider = TaskProvider(store: store);
     provider.addTask('Persist me', category: TaskCategory.work);

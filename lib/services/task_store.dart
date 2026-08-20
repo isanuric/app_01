@@ -1,37 +1,41 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
+
 import '../models/task.dart';
 
 class TaskStore {
-  TaskStore({String? fileName}) {
-    try {
-      _file = TaskStore._defaultFile(fileName);
-    } catch (e) {
-      // dart:io is unsupported on web; fall back to in-memory storage.
-      _file = null;
-    }
+  TaskStore._(this._file);
+
+  /// Creates a store in the app's private support directory.
+  ///
+  /// This is the correct location on all platforms (Android, iOS, macOS,
+  /// Windows, Linux). It throws if the platform directory cannot be resolved.
+  static Future<TaskStore> create({String? fileName}) async {
+    final dir = await getApplicationSupportDirectory();
+    final file = File(
+      '${dir.path}${Platform.pathSeparator}${fileName ?? 'tasks.json'}',
+    );
+    return TaskStore._(file);
   }
 
-  File? _file;
-
-  static File _defaultFile(String? fileName) {
+  /// Creates a store at a fixed, local path — only intended for tests.
+  static TaskStore forTest(String fileName) {
     final home = Platform.environment['HOME'] ?? Directory.current.path;
     final sep = Platform.pathSeparator;
     final base = Platform.operatingSystem == 'macos'
         ? '$home${sep}Library${sep}Application Support${sep}Todorist'
         : '$home${sep}Todorist';
-    return File('$base$sep${fileName ?? 'tasks.json'}');
+    return TaskStore._(File('$base$sep$fileName'));
   }
 
-  static String get appStoreName => 'Todorist';
+  final File _file;
 
   List<Task> loadSync() {
-    final file = _file;
-    if (file == null) return <Task>[];
     try {
-      if (!file.existsSync()) return <Task>[];
-      final json = file.readAsStringSync();
+      if (!_file.existsSync()) return <Task>[];
+      final json = _file.readAsStringSync();
       if (json.isEmpty) return <Task>[];
       final decoded = jsonDecode(json) as List<dynamic>;
       return [
@@ -45,22 +49,18 @@ class TaskStore {
   }
 
   void saveSync(List<Task> tasks) {
-    final file = _file;
-    if (file == null) return;
     try {
-      final dir = Directory(file.path).parent;
+      final dir = Directory(_file.path).parent;
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      file.writeAsStringSync(_toJson(tasks));
+      _file.writeAsStringSync(_toJson(tasks));
     } catch (e) {
       // Ignore persistence failures (e.g. web builds without file access).
     }
   }
 
   void deleteTestFile() {
-    final file = _file;
-    if (file == null) return;
     try {
-      if (file.existsSync()) file.deleteSync();
+      if (_file.existsSync()) _file.deleteSync();
     } catch (e) {
       // Ignore cleanup failures.
     }

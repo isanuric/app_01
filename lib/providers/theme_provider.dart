@@ -2,33 +2,36 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ThemeStore {
-  ThemeStore({String? fileName}) {
-    try {
-      _file = ThemeStore._defaultFile(fileName);
-    } catch (e) {
-      _file = null;
-    }
+  ThemeStore._(this._file);
+
+  /// Creates a store in the app's private support directory.
+  static Future<ThemeStore> create({String? fileName}) async {
+    final dir = await getApplicationSupportDirectory();
+    final file = File(
+      '${dir.path}${Platform.pathSeparator}${fileName ?? 'theme.json'}',
+    );
+    return ThemeStore._(file);
   }
 
-  File? _file;
-
-  static File _defaultFile(String? fileName) {
+  /// Creates a store at a fixed, local path — only intended for tests.
+  static ThemeStore forTest(String fileName) {
     final home = Platform.environment['HOME'] ?? Directory.current.path;
     final sep = Platform.pathSeparator;
     final base = Platform.operatingSystem == 'macos'
         ? '$home${sep}Library${sep}Application Support${sep}Todorist'
         : '$home${sep}Todorist';
-    return File('$base$sep${fileName ?? 'theme.json'}');
+    return ThemeStore._(File('$base$sep$fileName'));
   }
 
+  final File _file;
+
   ThemeMode load() {
-    final file = _file;
-    if (file == null) return ThemeMode.system;
     try {
-      if (!file.existsSync()) return ThemeMode.system;
-      final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      if (!_file.existsSync()) return ThemeMode.system;
+      final data = jsonDecode(_file.readAsStringSync()) as Map<String, dynamic>;
       return ThemeMode.values.firstWhere(
         (mode) => mode.name == data['mode'],
         orElse: () => ThemeMode.system,
@@ -39,12 +42,10 @@ class ThemeStore {
   }
 
   void save(ThemeMode mode) {
-    final file = _file;
-    if (file == null) return;
     try {
-      final dir = Directory(file.path).parent;
+      final dir = Directory(_file.path).parent;
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      file.writeAsStringSync(jsonEncode({'mode': mode.name}));
+      _file.writeAsStringSync(jsonEncode({'mode': mode.name}));
     } catch (e) {
       // Ignore persistence failures on unsupported platforms (e.g. web).
     }
@@ -52,7 +53,8 @@ class ThemeStore {
 }
 
 class ThemeProvider extends ChangeNotifier {
-  ThemeProvider({ThemeStore? store}) : _store = store ?? ThemeStore() {
+  ThemeProvider({ThemeStore? store})
+    : _store = store ?? ThemeStore.forTest('theme.json') {
     _mode = _store.load();
   }
 
