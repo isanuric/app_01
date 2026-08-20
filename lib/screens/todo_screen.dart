@@ -220,10 +220,15 @@ class _TodoScreenState extends State<TodoScreen> {
                 ),
                 children: [
                   FilterChip(
-                    label: const Text('All'),
+                    label: Semantics(
+                      label: 'All',
+                      child: const Icon(Icons.all_inclusive, size: 16),
+                    ),
                     selected: taskProvider.activeFilter == null,
                     onSelected: (_) =>
                         context.read<TaskProvider>().setFilter(null),
+                    showCheckmark: false,
+                    padding: const EdgeInsets.all(8),
                   ),
                   for (final category in [
                     TaskCategory.shopping,
@@ -234,11 +239,13 @@ class _TodoScreenState extends State<TodoScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: FilterChip(
-                        label: Text(category.name),
-                        avatar: Icon(
-                          categoryStyle(category).$2,
-                          size: 16,
-                          color: categoryStyle(category).$1,
+                        label: Semantics(
+                          label: category.name,
+                          child: Icon(
+                            categoryStyle(category).$2,
+                            size: 16,
+                            color: categoryStyle(category).$1,
+                          ),
                         ),
                         selected: taskProvider.activeFilter == category,
                         onSelected: (_) =>
