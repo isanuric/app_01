@@ -144,15 +144,18 @@ class _TodoScreenState extends State<TodoScreen> {
               child: Row(
                 children: [
                   const SizedBox(width: 8),
-                  SizedBox(
-                    width: 40,
-                    child: Checkbox(
-                      value: taskProvider.allDone,
-                      onChanged: tasks.isEmpty
-                          ? null
-                          : (value) => context.read<TaskProvider>().setAllDone(
-                              value ?? false,
-                            ),
+                  Semantics(
+                    label: 'Select all tasks',
+                    child: SizedBox(
+                      width: 40,
+                      child: Checkbox(
+                        value: taskProvider.allDone,
+                        onChanged: tasks.isEmpty
+                            ? null
+                            : (value) => context.read<TaskProvider>().setAllDone(
+                                value ?? false,
+                              ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -192,12 +195,17 @@ class _TodoScreenState extends State<TodoScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: taskProvider.totalCount == 0
-                          ? 0
-                          : taskProvider.doneCount / taskProvider.totalCount,
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
+                    Semantics(
+                      label:
+                          'Task progress, ${taskProvider.doneCount} of '
+                          '${taskProvider.totalCount} completed',
+                      child: LinearProgressIndicator(
+                        value: taskProvider.totalCount == 0
+                            ? 0
+                            : taskProvider.doneCount / taskProvider.totalCount,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ],
                 ),
@@ -225,43 +233,27 @@ class _TodoScreenState extends State<TodoScreen> {
                   ])
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
-child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: taskProvider.activeFilter == category
-                                  ? categoryStyle(category).$1
-                                  : colors.outline,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            color: taskProvider.activeFilter == category
-                                ? categoryStyle(category).$1.withAlpha(20)
-                                : Colors.transparent,
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => context.read<TaskProvider>().setFilter(
-                                category,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      categoryStyle(category).$2,
-                                      size: 16,
-                                      color: categoryStyle(category).$1,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                      child: FilterChip(
+                        label: Text(category.name),
+                        avatar: Icon(
+                          categoryStyle(category).$2,
+                          size: 16,
+                          color: categoryStyle(category).$1,
                         ),
+                        selected: taskProvider.activeFilter == category,
+                        onSelected: (_) =>
+                            context.read<TaskProvider>().setFilter(category),
+                        selectedColor: categoryStyle(category).$1.withAlpha(
+                          20,
+                        ),
+                        side: BorderSide(
+                          color: taskProvider.activeFilter == category
+                              ? categoryStyle(category).$1
+                              : colors.outline,
+                        ),
+                        showCheckmark: false,
+                        padding: const EdgeInsets.all(8),
+                      ),
                     ),
                 ],
               ),
@@ -352,6 +344,7 @@ child: Container(
                   PopupMenuButton<TaskCategory>(
                     onSelected: (category) =>
                         setState(() => _newCategory = category),
+                    tooltip: 'Choose category for new task',
                     itemBuilder: (context) => [
                       for (final category in [
                         TaskCategory.other,

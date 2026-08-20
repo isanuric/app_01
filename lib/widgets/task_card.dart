@@ -67,38 +67,46 @@ class _TaskCardState extends State<TaskCard> {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Dismissible(
-      key: ValueKey(task.id),
-      direction: DismissDirection.horizontal,
-      onDismissed: (_) {
-        _editing = false;
-        context.read<TaskProvider>().deleteTask(task.id);
-      },
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          context.read<TaskProvider>().toggleDone(task.id);
-          return false;
-        }
-        return true;
-      },
-      background: Container(
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: radius,
+    return Semantics(
+      label:
+          '${task.title}, ${task.category.name} category, '
+          '${task.priority.name} priority${task.isDone ? ', completed' : ''}',
+      child: Dismissible(
+        key: ValueKey(task.id),
+        direction: DismissDirection.horizontal,
+        onDismissed: (_) {
+          _editing = false;
+          context.read<TaskProvider>().deleteTask(task.id);
+        },
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            context.read<TaskProvider>().toggleDone(task.id);
+            return false;
+          }
+          return true;
+        },
+        background: ExcludeSemantics(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: radius,
+            ),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 20),
+            child: const Icon(Icons.check, color: Colors.white),
+          ),
         ),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        child: const Icon(Icons.check, color: Colors.white),
-      ),
-      secondaryBackground: Container(
-        decoration: BoxDecoration(
-          color: colors.error,
-          borderRadius: radius,
+        secondaryBackground: ExcludeSemantics(
+          child: Container(
+            decoration: BoxDecoration(
+              color: colors.error,
+              borderRadius: radius,
+            ),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
         ),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -123,7 +131,6 @@ class _TaskCardState extends State<TaskCard> {
               Checkbox(
                 value: task.isDone,
                 visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onChanged: (_) =>
                     context.read<TaskProvider>().toggleDone(task.id),
                 shape: RoundedRectangleBorder(
@@ -147,10 +154,11 @@ class _TaskCardState extends State<TaskCard> {
                             onSubmitted: (_) => _finishEditing(),
                             onTapOutside: (_) => _finishEditing(),
                           )
-                        : GestureDetector(
+                        : InkWell(
                             onTap: task.isDone
                                 ? null
                                 : () => _startEditing(task.title),
+                            borderRadius: BorderRadius.circular(4),
                             child: Text(
                               task.title,
                               maxLines: 2,
@@ -221,10 +229,11 @@ class _TaskCardState extends State<TaskCard> {
                           ),
                         ),
                         SizedBox(
-                          height: 24,
-                          width: 24,
+                          height: 32,
+                          width: 32,
                           child: PopupMenuButton<TaskPriority>(
                             padding: EdgeInsets.zero,
+                            tooltip: 'Change priority',
                             enabled: !task.isDone,
                             onSelected: (priority) =>
                                 context.read<TaskProvider>().setPriority(
@@ -254,7 +263,7 @@ class _TaskCardState extends State<TaskCard> {
                             ],
                             icon: Icon(
                               Icons.star_outline,
-                              size: 16,
+                              size: 18,
                               color: priorityColor(task.priority),
                             ),
                           ),
@@ -264,18 +273,23 @@ class _TaskCardState extends State<TaskCard> {
                   ],
                 ),
               ),
-              ReorderableDragStartListener(
-                index: widget.index,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 10),
-                  child: Icon(
-                    Icons.drag_handle,
-                    size: 18,
-                    color: colors.onSurface.withAlpha(120),
+              Semantics(
+                label: 'Reorder task',
+                button: true,
+                child: ReorderableDragStartListener(
+                  index: widget.index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 10),
+                    child: Icon(
+                      Icons.drag_handle,
+                      size: 18,
+                      color: colors.onSurface.withAlpha(120),
+                    ),
                   ),
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
