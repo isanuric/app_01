@@ -4,10 +4,16 @@ import 'dart:io';
 import '../models/task.dart';
 
 class TaskStore {
-  TaskStore({String? fileName})
-    : _file = TaskStore._defaultFile(fileName);
+  TaskStore({String? fileName}) {
+    try {
+      _file = TaskStore._defaultFile(fileName);
+    } catch (e) {
+      // dart:io is unsupported on web; fall back to in-memory storage.
+      _file = null;
+    }
+  }
 
-  final File _file;
+  File? _file;
 
   static File _defaultFile(String? fileName) {
     final home = Platform.environment['HOME'] ?? Directory.current.path;
@@ -21,9 +27,11 @@ class TaskStore {
   static String get appStoreName => 'Todorist';
 
   List<Task> loadSync() {
+    final file = _file;
+    if (file == null) return <Task>[];
     try {
-      if (!_file.existsSync()) return <Task>[];
-      final json = _file.readAsStringSync();
+      if (!file.existsSync()) return <Task>[];
+      final json = file.readAsStringSync();
       if (json.isEmpty) return <Task>[];
       final decoded = jsonDecode(json) as List<dynamic>;
       return [
@@ -37,18 +45,22 @@ class TaskStore {
   }
 
   void saveSync(List<Task> tasks) {
+    final file = _file;
+    if (file == null) return;
     try {
-      final dir = Directory(_file.path).parent;
+      final dir = Directory(file.path).parent;
       if (!dir.existsSync()) dir.createSync(recursive: true);
-      _file.writeAsStringSync(_toJson(tasks));
+      file.writeAsStringSync(_toJson(tasks));
     } catch (e) {
       // Ignore persistence failures (e.g. web builds without file access).
     }
   }
 
   void deleteTestFile() {
+    final file = _file;
+    if (file == null) return;
     try {
-      if (_file.existsSync()) _file.deleteSync();
+      if (file.existsSync()) file.deleteSync();
     } catch (e) {
       // Ignore cleanup failures.
     }
