@@ -15,12 +15,20 @@ class TaskProvider extends ChangeNotifier {
   final TaskStore _store;
 
   TaskCategory? activeFilter;
+  String searchQuery = '';
 
   List<Task> get tasks => UnmodifiableListView(_tasks);
 
-  List<Task> get filteredTasks => activeFilter == null
-      ? tasks
-      : UnmodifiableListView(_tasks.where((t) => t.category == activeFilter));
+  List<Task> get filteredTasks {
+    final query = searchQuery.trim().toLowerCase();
+    return UnmodifiableListView(
+      _tasks.where((t) {
+        final matchesCategory = activeFilter == null || t.category == activeFilter;
+        final matchesQuery = query.isEmpty || t.title.toLowerCase().contains(query);
+        return matchesCategory && matchesQuery;
+      }),
+    );
+  }
 
   bool get allDone => _tasks.isNotEmpty && _tasks.every((t) => t.isDone);
 
@@ -78,6 +86,12 @@ class TaskProvider extends ChangeNotifier {
 
   void setFilter(TaskCategory? category) {
     activeFilter = category;
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    if (searchQuery == query) return;
+    searchQuery = query;
     notifyListeners();
   }
 

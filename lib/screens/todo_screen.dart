@@ -80,6 +80,7 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
+  final _searchController = TextEditingController();
   final _listController = ScrollController();
   TaskCategory _newCategory = TaskCategory.shopping;
   final _borderRadius = BorderRadius.circular(12);
@@ -87,6 +88,7 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   void dispose() {
     _textEditingController.dispose();
+    _searchController.dispose();
     _listController.dispose();
     super.dispose();
   }
@@ -210,6 +212,36 @@ class _TodoScreenState extends State<TodoScreen> {
                   ],
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) =>
+                    context.read<TaskProvider>().setSearchQuery(value),
+                decoration: InputDecoration(
+                  hintText: 'Search tasks',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            context
+                                .read<TaskProvider>()
+                                .setSearchQuery('');
+                          },
+                          tooltip: 'Clear search',
+                        ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  isDense: true,
+                  filled: true,
+                  fillColor: colors.surface,
+                ),
+              ),
+            ),
             SizedBox(
               height: 40,
               child: ListView(

@@ -17,8 +17,12 @@ void main() {
     // Initially no tasks.
     expect(find.text('No tasks yet.'), findsOneWidget);
 
-    // Add a task.
-    await tester.enterText(find.byType(TextField), 'Milch kaufen');
+    // Add a task (find the input field via its "Add new task" hint).
+    final addField = find.ancestor(
+      of: find.byIcon(Icons.add),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(addField, 'Milch kaufen');
     await tester.tap(find.byIcon(Icons.add));
     await tester.pump(const Duration(milliseconds: 300)); // flush scroll timer
 
