@@ -7,6 +7,7 @@ import '../app_constants.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../services/time_service.dart';
+import '../widgets/task_card.dart';
 
 String _pad2(int n) => n.toString().padLeft(2, '0');
 
@@ -14,19 +15,6 @@ String _formatDate(DateTime dt) =>
     '${_pad2(dt.day)}.${_pad2(dt.month)}.${dt.year}';
 
 String _formatTime(DateTime dt) => '${_pad2(dt.hour)}:${_pad2(dt.minute)}';
-
-Color _priorityColor(TaskPriority priority) => switch (priority) {
-  TaskPriority.low => Colors.green,
-  TaskPriority.medium => Colors.orange,
-  TaskPriority.high => Colors.red,
-};
-
-(Color, IconData) _categoryStyle(TaskCategory category) => switch (category) {
-  TaskCategory.work => (Colors.blue, Icons.work_outline),
-  TaskCategory.personal => (Colors.purple, Icons.person_outline),
-  TaskCategory.shopping => (Colors.teal, Icons.shopping_cart_outlined),
-  TaskCategory.other => (Colors.grey, Icons.category_outlined),
-};
 
 class _ClockTitle extends StatefulWidget {
   const _ClockTitle();
@@ -92,16 +80,13 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final _textEditingController = TextEditingController();
-  final _editController = TextEditingController();
   final _listController = ScrollController();
-  String? _editingTaskId;
   TaskCategory _newCategory = TaskCategory.shopping;
   final _borderRadius = BorderRadius.circular(12);
 
   @override
   void dispose() {
     _textEditingController.dispose();
-    _editController.dispose();
     _listController.dispose();
     super.dispose();
   }
@@ -126,24 +111,6 @@ class _TodoScreenState extends State<TodoScreen> {
     });
   }
 
-  void _startEditing(String id, String title) {
-    setState(() {
-      _editingTaskId = id;
-      _editController.text = title;
-    });
-  }
-
-  void _finishEditing(String id) {
-    final title = _editController.text.trim();
-    if (_editingTaskId != id) return;
-    if (title.isNotEmpty) {
-      context.read<TaskProvider>().editTask(id, title);
-    }
-    setState(() {
-      _editingTaskId = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
@@ -154,7 +121,7 @@ class _TodoScreenState extends State<TodoScreen> {
     final textTheme = theme.textTheme;
     final hintTextColor = colors.onSurface.withAlpha(100);
     final emptyStateIconColor = colors.primary.withAlpha(100);
-    final newCategoryStyle = _categoryStyle(_newCategory);
+    final newCategoryStyle = categoryStyle(_newCategory);
 
     return Scaffold(
       appBar: AppBar(title: const _ClockTitle(), centerTitle: true),
@@ -258,43 +225,43 @@ class _TodoScreenState extends State<TodoScreen> {
                   ])
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: taskProvider.activeFilter == category
-                                ? _categoryStyle(category).$1
-                                : colors.outline,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          color: taskProvider.activeFilter == category
-                              ? _categoryStyle(category).$1.withAlpha(20)
-                              : Colors.transparent,
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => context.read<TaskProvider>().setFilter(
-                              category,
+child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: taskProvider.activeFilter == category
+                                  ? categoryStyle(category).$1
+                                  : colors.outline,
                             ),
                             borderRadius: BorderRadius.circular(16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _categoryStyle(category).$2,
-                                    size: 16,
-                                    color: _categoryStyle(category).$1,
-                                  ),
-                                ],
+                            color: taskProvider.activeFilter == category
+                                ? categoryStyle(category).$1.withAlpha(20)
+                                : Colors.transparent,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => context.read<TaskProvider>().setFilter(
+                                category,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      categoryStyle(category).$2,
+                                      size: 16,
+                                      color: categoryStyle(category).$1,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                     ),
                 ],
               ),
@@ -344,319 +311,10 @@ class _TodoScreenState extends State<TodoScreen> {
                           child: Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 520),
-                              child: Dismissible(
-                                key: ValueKey(task.id),
-                                direction: DismissDirection.horizontal,
-                                onDismissed: (_) {
-                                  if (_editingTaskId == task.id) {
-                                    _editingTaskId = null;
-                                  }
-                                  context.read<TaskProvider>().deleteTask(
-                                    task.id,
-                                  );
-                                },
-                                confirmDismiss: (direction) async {
-                                  if (direction ==
-                                      DismissDirection.startToEnd) {
-                                    context.read<TaskProvider>().toggleDone(
-                                      task.id,
-                                    );
-                                    return false;
-                                  }
-                                  return true;
-                                },
-                                background: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: _borderRadius,
-                                  ),
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.only(left: 20),
-                                  child: const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                secondaryBackground: Container(
-                                  decoration: BoxDecoration(
-                                    color: colors.error,
-                                    borderRadius: _borderRadius,
-                                  ),
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                child: Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: _borderRadius,
-                                    side: task.isDone
-                                        ? BorderSide(
-                                            color: colors.outlineVariant,
-                                          )
-                                        : BorderSide.none,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 4,
-                                          height: 20,
-                                          decoration: BoxDecoration(
-                                            color: _priorityColor(
-                                              task.priority,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              2,
-                                            ),
-                                          ),
-                                        ),
-                                        Checkbox(
-                                          value: task.isDone,
-                                          visualDensity: VisualDensity.compact,
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          onChanged: (_) => context
-                                              .read<TaskProvider>()
-                                              .toggleDone(task.id),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              _editingTaskId == task.id
-                                                  ? TextField(
-                                                      controller:
-                                                          _editController,
-                                                      autofocus: true,
-                                                      style:
-                                                          textTheme.bodyLarge,
-                                                      decoration:
-                                                          const InputDecoration(
-                                                            isDense: true,
-                                                            border: InputBorder
-                                                                .none,
-                                                          ),
-                                                      onSubmitted: (_) =>
-                                                          _finishEditing(
-                                                            task.id,
-                                                          ),
-                                                      onTapOutside: (_) =>
-                                                          _finishEditing(
-                                                            task.id,
-                                                          ),
-                                                    )
-                                                  : GestureDetector(
-                                                      onTap: task.isDone
-                                                          ? null
-                                                          : () => _startEditing(
-                                                              task.id,
-                                                              task.title,
-                                                            ),
-                                                      child: Text(
-                                                        task.title,
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: textTheme
-                                                            .bodyLarge
-                                                            ?.copyWith(
-                                                              decoration:
-                                                                  task.isDone
-                                                                  ? TextDecoration
-                                                                        .lineThrough
-                                                                  : null,
-                                                              color: task.isDone
-                                                                  ? colors
-                                                                        .onSurfaceVariant
-                                                                  : null,
-                                                            ),
-                                                      ),
-                                                    ),
-                                              const SizedBox(height: 2),
-                                              Row(
-                                                children: [
-                                                  Flexible(
-                                                    child: PopupMenuButton<TaskCategory>(
-                                                      padding: EdgeInsets.zero,
-                                                      tooltip:
-                                                          'Change category',
-                                                      enabled: !task.isDone,
-                                                      onSelected: (category) =>
-                                                          context
-                                                              .read<
-                                                                TaskProvider
-                                                              >()
-                                                              .setCategory(
-                                                                task.id,
-                                                                category,
-                                                              ),
-                                                      itemBuilder: (context) => [
-                                                        for (final category
-                                                            in TaskCategory
-                                                                .values)
-                                                          PopupMenuItem(
-                                                            value: category,
-                                                            child: Row(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Icon(
-                                                                  _categoryStyle(
-                                                                    category,
-                                                                  ).$2,
-                                                                  size: 18,
-                                                                  color:
-                                                                      _categoryStyle(
-                                                                        category,
-                                                                      ).$1,
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 8,
-                                                                ),
-                                                                Text(
-                                                                  category.name,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                      ],
-                                                      child: Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Icon(
-                                                            _categoryStyle(
-                                                              task.category,
-                                                            ).$2,
-                                                            size: 14,
-                                                            color:
-                                                                _categoryStyle(
-                                                                  task.category,
-                                                                ).$1,
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 4,
-                                                          ),
-                                                          Flexible(
-                                                            child: Text(
-                                                              task
-                                                                  .category
-                                                                  .name,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: textTheme
-                                                                  .labelSmall
-                                                                  ?.copyWith(
-                                                                    color: _categoryStyle(
-                                                                      task.category,
-                                                                    ).$1,
-                                                                  ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    height: 24,
-                                                    width: 24,
-                                                    child: PopupMenuButton<TaskPriority>(
-                                                      padding: EdgeInsets.zero,
-                                                      enabled: !task.isDone,
-                                                      onSelected: (priority) =>
-                                                          context
-                                                              .read<
-                                                                TaskProvider
-                                                              >()
-                                                              .setPriority(
-                                                                task.id,
-                                                                priority,
-                                                              ),
-                                                      itemBuilder: (context) => [
-                                                        for (final priority
-                                                            in TaskPriority
-                                                                .values)
-                                                          PopupMenuItem(
-                                                            value: priority,
-                                                            child: Row(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Container(
-                                                                  width: 12,
-                                                                  height: 12,
-                                                                  decoration: BoxDecoration(
-                                                                    color: _priorityColor(
-                                                                      priority,
-                                                                    ),
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 8,
-                                                                ),
-                                                                Text(
-                                                                  priority.name,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                      ],
-                                                      icon: Icon(
-                                                        Icons.star_outline,
-                                                        size: 16,
-                                                        color: _priorityColor(
-                                                          task.priority,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        ReorderableDragStartListener(
-                                          index: index,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 4,
-                                              top: 10,
-                                            ),
-                                            child: Icon(
-                                              Icons.drag_handle,
-                                              size: 18,
-                                              color: colors.onSurface.withAlpha(
-                                                120,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              child: TaskCard(
+                                task: task,
+                                index: index,
+                                borderRadius: _borderRadius,
                               ),
                             ),
                           ),
@@ -707,9 +365,9 @@ class _TodoScreenState extends State<TodoScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                _categoryStyle(category).$2,
+                                categoryStyle(category).$2,
                                 size: 14,
-                                color: _categoryStyle(category).$1,
+                                color: categoryStyle(category).$1,
                               ),
                               const SizedBox(width: 8),
                               Text(category.name),
