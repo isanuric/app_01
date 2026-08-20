@@ -3,9 +3,16 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../models/task.dart';
+import '../services/task_store.dart';
 
 class TaskProvider extends ChangeNotifier {
+  TaskProvider({TaskStore? store})
+    : _store = store ?? TaskStore() {
+    _tasks.addAll(_store.loadSync());
+  }
+
   final List<Task> _tasks = [];
+  final TaskStore _store;
 
   TaskCategory? activeFilter;
 
@@ -31,8 +38,13 @@ class TaskProvider extends ChangeNotifier {
   void _update(String id, bool Function(Task task) mutate) {
     final task = _taskById(id);
     if (task == null) return;
-    if (mutate(task)) notifyListeners();
+    if (mutate(task)) {
+      notifyListeners();
+      _persist();
+    }
   }
+
+  void _persist() => _store.saveSync(_tasks);
 
   void addTask(
     String title, {
@@ -45,6 +57,7 @@ class TaskProvider extends ChangeNotifier {
       Task(id: id, title: title.trim(), priority: priority, category: category),
     );
     notifyListeners();
+    _persist();
   }
 
   void setPriority(String id, TaskPriority priority) {
@@ -88,6 +101,7 @@ class TaskProvider extends ChangeNotifier {
   void deleteTask(String id) {
     _tasks.removeWhere((task) => task.id == id);
     notifyListeners();
+    _persist();
   }
 
   void reorderTask(int oldIndex, int newIndex) {
@@ -110,6 +124,7 @@ class TaskProvider extends ChangeNotifier {
       );
     }
     notifyListeners();
+    _persist();
   }
 
   void setAllDone(bool done) {
@@ -117,10 +132,12 @@ class TaskProvider extends ChangeNotifier {
       task.isDone = done;
     }
     notifyListeners();
+    _persist();
   }
 
   void deleteAll() {
     _tasks.clear();
     notifyListeners();
+    _persist();
   }
 }

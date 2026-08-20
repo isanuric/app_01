@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'app_constants.dart';
 import 'providers/task_provider.dart';
 import 'screens/todo_screen.dart';
+import 'services/task_store.dart';
 
 const _appBarTheme = AppBarTheme(elevation: 0, scrolledUnderElevation: 0);
 
@@ -21,12 +22,14 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.store});
+
+  final TaskStore? store;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TaskProvider(),
+      create: (_) => TaskProvider(store: store),
       child: MaterialApp(
         title: appName,
         theme: _buildTheme(Brightness.light),
