@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../app_constants.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../services/time_service.dart';
@@ -26,9 +27,6 @@ Color _priorityColor(TaskPriority priority) => switch (priority) {
   TaskCategory.shopping => (Colors.teal, Icons.shopping_cart_outlined),
   TaskCategory.other => (Colors.grey, Icons.category_outlined),
 };
-
-final _doneTaskBorderColor = Colors.grey.withAlpha(100);
-final _deleteIconColor = Colors.red.withAlpha(150);
 
 class _ClockTitle extends StatefulWidget {
   const _ClockTitle();
@@ -73,7 +71,7 @@ class _ClockTitleState extends State<_ClockTitle> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('My Tasks'),
+            const Text(appName),
             Text(
               '$dateStr $timeStr',
               style: Theme.of(context).textTheme.labelMedium,
@@ -156,7 +154,7 @@ class _TodoScreenState extends State<TodoScreen> {
     final textTheme = theme.textTheme;
     final hintTextColor = colors.onSurface.withAlpha(100);
     final emptyStateIconColor = colors.primary.withAlpha(100);
-    final shadowColor = colors.primary.withAlpha(100);
+    final newCategoryStyle = _categoryStyle(_newCategory);
 
     return Scaffold(
       appBar: AppBar(title: const _ClockTitle(), centerTitle: true),
@@ -200,7 +198,7 @@ class _TodoScreenState extends State<TodoScreen> {
                         : () => context.read<TaskProvider>().deleteAll(),
                     icon: Icon(
                       Icons.delete_sweep_outlined,
-                      color: _deleteIconColor,
+                      color: colors.error,
                     ),
                     tooltip: 'Delete all',
                   ),
@@ -265,7 +263,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           border: Border.all(
                             color: taskProvider.activeFilter == category
                                 ? _categoryStyle(category).$1
-                                : Colors.grey.withAlpha(100),
+                                : colors.outline,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           color: taskProvider.activeFilter == category
@@ -323,7 +321,7 @@ class _TodoScreenState extends State<TodoScreen> {
                           Text(
                             'Add a new task to get started',
                             style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -381,7 +379,7 @@ class _TodoScreenState extends State<TodoScreen> {
                                 ),
                                 secondaryBackground: Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.red,
+                                    color: colors.error,
                                     borderRadius: _borderRadius,
                                   ),
                                   alignment: Alignment.centerRight,
@@ -397,7 +395,7 @@ class _TodoScreenState extends State<TodoScreen> {
                                     borderRadius: _borderRadius,
                                     side: task.isDone
                                         ? BorderSide(
-                                            color: _doneTaskBorderColor,
+                                            color: colors.outlineVariant,
                                           )
                                         : BorderSide.none,
                                   ),
@@ -485,7 +483,8 @@ class _TodoScreenState extends State<TodoScreen> {
                                                                         .lineThrough
                                                                   : null,
                                                               color: task.isDone
-                                                                  ? Colors.grey
+                                                                  ? colors
+                                                                        .onSurfaceVariant
                                                                   : null,
                                                             ),
                                                       ),
@@ -666,7 +665,7 @@ class _TodoScreenState extends State<TodoScreen> {
                     ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
               child: Row(
                 children: [
                   Expanded(
@@ -682,6 +681,10 @@ class _TodoScreenState extends State<TodoScreen> {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: _submit,
+                          icon: const Icon(Icons.add, size: 20),
                         ),
                       ),
                       onSubmitted: (_) => _submit(),
@@ -715,33 +718,11 @@ class _TodoScreenState extends State<TodoScreen> {
                         ),
                     ],
                     icon: Icon(
-                      _categoryStyle(_newCategory).$2,
-                      size: 14,
-                      color: _categoryStyle(_newCategory).$1,
+                      newCategoryStyle.$2,
+                      size: 22,
+                      color: newCategoryStyle.$1,
                     ),
                     padding: const EdgeInsets.all(4),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: shadowColor,
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: IconButton.filled(
-                        onPressed: _submit,
-                        padding: const EdgeInsets.all(6),
-                        icon: const Icon(Icons.add, size: 18),
-                      ),
-                    ),
                   ),
                 ],
               ),

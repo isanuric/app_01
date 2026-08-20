@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'app_constants.dart';
 import 'providers/task_provider.dart';
 import 'screens/todo_screen.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => TaskProvider(),
       child: MaterialApp(
-        title: 'task-manager',
+        title: appName,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
         themeMode: ThemeMode.system,
