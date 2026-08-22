@@ -1,25 +1,49 @@
-# task-manager
+# Todorist
 
-## Quick Start
+A modern, clean, and responsive task management application built with Flutter and Provider.
 
-1. Installiere Flutter: https://docs.flutter.dev/get-started/install (empfohlener SDK-Pfad auf macOS: /opt/homebrew/share/flutter).
-2. Abhängigkeiten holen: flutter pub get
-3. App starten: flutter run
-4. Tests ausführen: flutter test
-5. IntelliJ-Fehler bei Analyse: Settings → Languages & Frameworks → Flutter → SDK auf /opt/homebrew/share/flutter setzen, dann File → Invalidate Caches / Restart.
+## Features
 
-A new Flutter project.
+- Task Organization: Create, edit, reorder, and complete tasks with ease.
+- Priorities and Categories: Assign priorities (Low, Medium, High) and categorize tasks (Work, Personal, Shopping, Other).
+- Search and Filtering: Real-time search and instant category filtering.
+- Reorderable List: Drag-and-drop support to prioritize tasks manually.
+- Local Persistence: Automatic synchronization and storage via local JSON files.
+- Theme Support: Smooth light and dark mode switching.
+
+## Tech Stack & Architecture
+
+- Framework: Flutter
+- Language: Dart
+- State Management: Provider
+- Persistence: Path Provider (JSON-based task store)
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (>= 3.13.0)
+- Dart SDK
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Installation & Run
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:isanuric/todorist.git
+   cd todorist
+   ```
+
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+3. Run the application:
+   ```bash
+   flutter run
+   ```
+
+4. Run tests:
+   ```bash
+   flutter test
+   ```
